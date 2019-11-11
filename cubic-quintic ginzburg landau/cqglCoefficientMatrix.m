@@ -7,6 +7,9 @@ b = (- grid.dt * (params.gamma_1/2) * (1/grid.dx^2)) * ones(grid.nx-3, 1);
 c = ((grid.dt * -params.v)/(grid.dx)) - (grid.dt * (params.gamma_1/2) ...
     * (1/grid.dx^2)) * ones(grid.nx-3, 1);
 
+a = ((1/grid.dt) + (params.v/grid.dx) + ((params.gamma_1 * 2)/grid.dx^2)) * ones(grid.nx-2, 1);
+b = (-params.gamma_1 / grid.dx) *  ones(grid.nx-3, 1);
+c = ((-params.v/grid.dx) - (params.gamma_1/grid.dx^2)) * ones(grid.nx-3, 1);
 % --- fix coefficient boundary nodes
 % b(1) = 1; b(end) = 1;
 % c(1) = 0; a(end) = 0;

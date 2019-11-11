@@ -73,10 +73,10 @@ param.alpha_2 = alpha(1,2);
 param.L = L;
 
 % --- Initialize the grid
-nx = 9; % number of positional entried
-nt = 9; % number of time entries
-L = 2; % maximal positional entry
-tmax = 4; % maximal time entry
+nx = 100; % number of positional entried
+nt = 100; % number of time entries
+L = 20; % maximal positional entry
+tmax = 40; % maximal time entry
 grid = cqglGridInitialization(nx, nt, L, tmax);
 
 % -- obtain coefficient matrix
@@ -122,14 +122,31 @@ end
 %      grid.U(:,m) = cqglTriDiagSolve(d,coeff.a,e,f,grid.U(:, m-1)); % solve the system
 % end
 
+amplitude = grid.U;
 
-Uo(1) = 100;
+Uo(1) = grid.U(1);
 Uo(2:grid.nx-1) = 0;
-Uo(grid.nx) = 50;
-Un(1) = 100; Un(grid.nx) = 50;
+Uo(grid.nx) = grid.U(grid.nx);
+Un(1) = grid.U(1); Un(grid.nx) = grid.U(grid.nx);
 for m = 2:grid.nt
    for ii = 1:grid.nx-2
-      d(ii) = 1 
+     x = grid.x(1, ii);
+     t = grid.t(1, m);
+     ampA = amp.A(x, t, sqrt(param.nsq), param.R, param.w, param.k1, param.omega_1 ...
+     ,param.alpha_1, param.b, param.L);
+     ampB = amp.A(x, t, sqrt(param.nsq), param.R, param.w, param.k2, param.omega_2 ...
+     ,param.alpha_2, param.b, param.L);
+     d(ii) = (ampA/grid.dt) + param.chi_1 * ampA - ...
+          param.beta_1 * abs(ampA)^2* ampA - param.delta_1 * abs(ampA)^4 * ampA ...
+          - param.xi_1 * abs(ampB)^2 * ampA;
+      amplitude(ii, nt) = ampA;
    end
+   
+   UU = coeff.AA\d';
+   Un = [Un(1), UU', Un(nx)];
+   grid.U(m, :) = Un;
+   Uo = Un;
 end
 
+grid.Amp = amplitude;
+disp("yoan");

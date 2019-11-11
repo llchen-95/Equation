@@ -110,7 +110,7 @@ amplitude_b = (abs(amplitude_b));
 
 subplot(2,1,1)
 colormap(cool);
-s1 = surf(t,Y,amplitude,'FaceAlpha',0.8); 
+s1 = surf(t,Y,amplitude.^2,'FaceAlpha',0.8); 
 s1.EdgeColor = 'none';
 
 %title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
@@ -130,47 +130,47 @@ xlabel('time'); ylabel('x'); zlabel("|A|^2");
 
 
 %%
-for i = 1: length(t)
-    if t(1,i) == 0 || X(1,i) == 0
-        rng('shuffle');
-        amplitude = [amplitude,  A(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, k1val, o1, a1, L1, b) * (1+0.7 *rand(1))];
-        amplitude_b = [amplitude_b,  B(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, sqrt(k2sq), o2, a2, L1, b) * (1+0.1 * rand(1))];
-    else
-        amplitude = [amplitude,  A(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, k1val, o1, a1, L1, b)];
-        amplitude_b = [amplitude_b,  B(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, sqrt(k2sq), o2, a2, L1, b)];
-    end
-end
-amplitude = meshgrid(abs(amplitude));
-amplitude_b = meshgrid(abs(amplitude_b));
-
-figure(1);
-
-subplot(2,1,1)
-colormap(cool);
-s1 = surf(t,Y,amplitude,'FaceAlpha',0.8); 
-s1.EdgeColor = 'none';
-
-%title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
-title("bright-bright solitary waves for eq(1)");
-xlabel('time'); ylabel('x'); zlabel("|A|^2");
-%zlabel(sprintf('u(x,y,t = %1.2f)',t(j)),'Fontsize',11);
-%axis ([0 1 0 1 -1 1]);
-
-subplot(2,1,2)
-colormap(cool);
-s2 = surf(t,Y,amplitude_b,'FaceAlpha',0.8); 
-s2.EdgeColor = 'none';
-
-%title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
-title("bright-bright solitary waves for eq(2)");
-xlabel('time'); ylabel('x'); zlabel("|A|^2");
-
+% for i = 1: length(t)
+%     if t(1,i) == 0 || X(1,i) == 0
+%         rng('shuffle');
+%         amplitude = [amplitude,  A(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, k1val, o1, a1, L1, b) * (1+0.7 *rand(1))];
+%         amplitude_b = [amplitude_b,  B(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, sqrt(k2sq), o2, a2, L1, b) * (1+0.1 * rand(1))];
+%     else
+%         amplitude = [amplitude,  A(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, k1val, o1, a1, L1, b)];
+%         amplitude_b = [amplitude_b,  B(X(1,i), t(1,i), sqrt(nsq), sqrt(rsq), wval, sqrt(k2sq), o2, a2, L1, b)];
+%     end
+% end
+% amplitude = meshgrid(abs(amplitude));
+% amplitude_b = meshgrid(abs(amplitude_b));
+% 
+% figure(1);
+% 
+% subplot(2,1,1)
+% colormap(cool);
+% s1 = surf(t,Y,amplitude,'FaceAlpha',0.8); 
+% s1.EdgeColor = 'none';
+% 
+% %title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
+% title("bright-bright solitary waves for eq(1)");
+% xlabel('time'); ylabel('x'); zlabel("|A|^2");
+% %zlabel(sprintf('u(x,y,t = %1.2f)',t(j)),'Fontsize',11);
+% %axis ([0 1 0 1 -1 1]);
+% 
+% subplot(2,1,2)
+% colormap(cool);
+% s2 = surf(t,Y,amplitude_b,'FaceAlpha',0.8); 
+% s2.EdgeColor = 'none';
+% 
+% %title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
+% title("bright-bright solitary waves for eq(2)");
+% xlabel('time'); ylabel('x'); zlabel("|A|^2");
+% 
 function val = findNegativeValueInArray(arr)
     [row, col] = find(arr < 0);
     val = arr(row, col);
 end
-
-
+% 
+% 
 function val = findPositiveValueInArray(arr)
     [row, col] = find(arr > 0);
     val = arr(row, col);

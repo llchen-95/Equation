@@ -108,29 +108,121 @@ t = 0:1/8:5;
 [X,Y] = meshgrid(-20:1:20, -0:1/40:1);
 t = meshgrid(t);
 
-[rows, cols] = size(X);
 
-amplitude = zeros(rows, cols);
+
+% --- COEFF MATRIX ---------
+
+% --- PARAMS ----------
+
+L = 20; % maximal positional entry
+nx = (L*2)+1; % number of positional entried
+nt = (L*2)+1; % number of time entries
+tmax = 4; % maximal time entry
+
+% --- Mesh Spacing & time step
+grid.dx = L / (nx - 1);
+grid.dt = tmax / (nt - 1);
+grid.nx = nx;
+grid.nt = nt;
+
+% --- Create arrays to save output
+grid.x = linspace(-L, L, nx); 
+grid.t = linspace(0, tmax, nt);
+grid.U = zeros(nx, nt);
+
+% set boundary conditions
+grid.U(:, 1) = 0;
+grid.u0 = 0; grid.uL = 0;
+
+[rows, cols] = size(grid.U);
+
+
+% --- coefficients of the tridiagonal system
+aa = (1 - ((grid.dt * -v)/(grid.dx)) + grid.dt * ...
+    (gamma1/2) * (2 / grid.dx^2)) * ones(grid.nx-2, 1);
+bb = (- grid.dt * (gamma1/2) * (1/grid.dx^2)) * ones(grid.nx-3, 1);
+cc = ((grid.dt * -v)/(grid.dx)) - (grid.dt * (gamma1/2) ...
+    * (1/grid.dx^2)) * ones(grid.nx-3, 1);
+
+aa = ((1/grid.dt) + (v/grid.dx) + ((gamma1 * 2)/grid.dx^2)) * ones(grid.nx-2, 1);
+bb = (-gamma1 / grid.dx) *  ones(grid.nx-3, 1);
+cc = ((-v/grid.dx) - (gamma1/grid.dx^2)) * ones(grid.nx-3, 1);
+% --- fix coefficient boundary nodes
+% b(1) = 1; b(end) = 1;
+% c(1) = 0; a(end) = 0;
+
+coeff.a = aa;
+coeff.b = bb;
+coeff.c = cc;
+AA = diag(aa) + diag(bb, 1) + diag(cc, -1);
+coeff.AA = AA;
+
+
+amplitude_a = zeros(rows, cols);
 amplitude_b = zeros(rows, cols);
+amplitude = 0; d = 0;
 
-for z = 1:length(X)
-   for j = 1:length(t) 
-        if t(1, z) == 0 || X(1, z) == 0
-            t_x = X(1, z);
-            t_t = t(1, z);            
-            amplitude(z, j) =  A(t_x, t_t, t_n, t_r, t_w, t_k1, t_omega1, alpha1, b) + ...
+Uo(1) = grid.U(1);
+Uo(2:grid.nx-1) = 0;
+Uo(grid.nx) = grid.U(grid.nx);
+Un(1) = grid.U(1); Un(grid.nx) = grid.U(grid.nx);
+
+for z = 1:grid.nt
+   for j = 1:grid.nx 
+        if grid.x(1, z) == 0 || grid.t(1, z) == 0
+            t_x = grid.x(1, z);
+            t_t = grid.t(1, z);            
+            amplitude_a(z, j) =  A(t_x, t_t, t_n, t_r, t_w, t_k1, t_omega1, alpha1, b) + ...
                 A(t_x, t_t, t_n, t_r, t_w, t_k1, t_omega1, alpha1, b) * ((0.1 *rand(1)));
             amplitude_b(z, j) =  B(t_x, t_t, t_mu, t_r, t_w, t_k2, t_omega2, alpha2, b) + ...
                 B(t_x, t_t, t_mu, t_r, t_w, t_k2, t_omega2, alpha2, b) * ((0.1 * rand(1)));
-        else
-            amplitude(z, j) =  A(t_x, t_t, t_n, t_r, t_w, t_k1, t_omega1, alpha1, b);
-            amplitude_b(z, j) =  B(t_x, t_t, t_mu, t_r, t_w, t_k2, t_omega2, alpha2, b);
-            
-            amplitude = computeCoupledEquationOne(real(amplitude), real(amplitude_b), chi1, gamma1, beta1(xi1, xi2, beta2), delta1, xi1);
-           
+            ampA =  amplitude_a(z, j); 
+            ampB =  amplitude_b(z, j);
+            d(1,j) = (ampA/grid.dt) + chi1 * ampA - ...
+            beta1(xi1, xi2, beta2) * abs(ampA)^2* ampA - delta1 * abs(ampA)^4 * ampA ...
+            - xi1 * abs(ampB)^2 * ampA;
         end
    end
+   
+   if grid.x(1, z) == 0 || grid.t(1, z) == 0
+       UU = coeff.AA\d(2:end-1)';
+       Un = [Un(1), UU', Un(nx)];
+       grid.U(1, :) = Un;
+       Uo = Un;
+   end
 end
+
+figure;
+colormap(cool);
+s1 = surf(grid.x,grid.t,abs(grid.U),'FaceAlpha',1);
+
+d = 0;
+for z = 2:grid.nt
+   for j = 1:grid.nx-2 
+        t_x = grid.t(1, j);
+        t_t = grid.x(1, z);
+     
+        amplitude_a(z, j) =  A(t_x, t_t, t_n, t_r, t_w, t_k1, t_omega1, alpha1, b);
+        amplitude_b(z, j) =  B(t_x, t_t, t_mu, t_r, t_w, t_k2, t_omega2, alpha2, b);
+
+        %amplitude = computeCoupledEquationOne(real(amplitude_a), real(amplitude_b), chi1, gamma1, beta1(xi1, xi2, beta2), delta1, xi1);
+        ampA =  amplitude_a(z, j); 
+        ampB =  amplitude_b(z, j);
+        d(1,j) = (ampA/grid.dt) + chi1 * ampA - ...
+                beta1(xi1, xi2, beta2) * abs(ampA)^2* ampA - delta1 * abs(ampA)^4 * ampA ...
+                - xi1 * abs(ampB)^2 * ampA;
+        
+   end
+   UU = coeff.AA\d';
+   Un = [Un(1), UU', Un(nx)];
+   grid.U(z, :) = Un;
+   Uo = Un;
+end
+
+figure;
+colormap(cool);
+s1 = surf(grid.x,grid.t,abs(grid.U),'FaceAlpha',1);
+
 
 % A = amplitude;
 % B = amplitude_b;
@@ -144,13 +236,13 @@ end
 % amplitude_b = chi2(alpha1, alpha2, gamma1, gamma2, chi1) .* B + gamma2 .* Bxx - beta2 * (abs(B).^2) * B - delta2 * (abs(B).^4) * B - xi2 * (abs(A).^2) * B;
 
 % Draw
-%amplitude = (abs(amplitude));
-%amplitude_b = (abs(amplitude_b));
+amplitude = (abs(amplitude_a));
+amplitude_b = (abs(amplitude_b));
 
 figure(1);
 subplot(2,1,1)
 colormap(cool);
-s1 = surf(t,Y,amplitude,'FaceAlpha',1);
+s1 = surf(grid.t,grid.x,(amplitude),'FaceAlpha',1);
 % s1.EdgeColor = 'none'; 
 %title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
 title("dark-dark solitary waves for eq(1) (Perturbed) A(x, t)");
@@ -160,7 +252,7 @@ xlabel('time'); ylabel('x'); zlabel("|A|^2");
 
 subplot(2,1,2)
 colormap(winter);
-s2 = surf(t,Y,amplitude_b,'FaceAlpha',1); 
+s2 = surf(grid.t,grid.x,amplitude_b,'FaceAlpha',1); 
 
 %title(sprintf('2D wave equation at t = %1.2f, con sigma = %1.2f y gamma = %1.2f',t(j),sigma, gamma),'Fontsize',11);
 title("dark-dark solitary waves for eq(2) (Perturbed) B(x, t)");
